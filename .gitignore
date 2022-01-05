@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Special ignores for this repo
+mlops-venv/
+textcat_goemotions/
