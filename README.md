@@ -69,8 +69,9 @@ There are a lot of fields, but the test response "Oh thank you so much" got an a
 We will use Flask as a simple framework for delivering HTTP requests taking the form of the tests from the previous step. The idea is, we will host a Flask app, that will have a URL associated with it, and when we send JSON similar to `{"text":"Some message"}` as a payload, we will get back a payload with the above JSON of predictions.
 We will be making partial use of the Python quickstart in this guide for the next few steps: https://cloud.google.com/run/docs/quickstarts
 
-In order to run the Flask app, install Flask:
-`pip install flask`
+In order to run the Flask app, install Flask and gunicorn:
+`pip install Flask==2.0.2`
+`pip install gunicorn==20.1.0`
 
 Then we can run the app locally. Navigate to the root of this repository (`ncf-mlops-workshop-jan22`):
 `cd ..`
@@ -81,15 +82,18 @@ And then run the Flask app from the shell:
 You will get some logs telling you what the location of the Flask server is on your local machine:
 
 ```
-(mlops-venv) Matthiass-MBP:ncf-mlops-workshop-jan22 Matthias$ python3 app.py
+(mlops-venv) Matthias@Matthiass-MBP ncf-mlops-workshop-jan22 % python3 app.py 
  * Serving Flask app 'app' (lazy loading)
  * Environment: production
    WARNING: This is a development server. Do not use it in a production deployment.
    Use a production WSGI server instead.
- * Debug mode: off
+ * Debug mode: on
  * Running on all addresses.
    WARNING: This is a development server. Do not use it in a production deployment.
- * Running on http://192.168.1.31:5000/ (Press CTRL+C to quit)
+ * Running on http://192.168.1.31:8080/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 353-036-223
 ```
 
 Therefore, we can use the Python `requests` library to check and make sure this is delivering model inference as desired. Enter a Python shell:
@@ -101,12 +105,120 @@ Python 3.6.4 |Anaconda, Inc.| (default, Jan 16 2018, 12:04:33)
 Type "help", "copyright", "credits" or "license" for more information.
 >>> import requests
 >>> import json
->>> content_json = json.loads(requests.get('http://192.168.1.31:5000/',json={"response":"He is the worst!"}).content)
+>>> content_json = json.loads(requests.post('http://192.168.1.31:8080/predict',json={"response":"He is the worst!"}).content)
 >>> content_json['annoyance']
 0.12393056601285934
 ```
 
 Great, so we have a Flask app. Terminate the process with Ctl-C to cancel.
 
-## Step 5: Dockerize
+## Step 5a: Dockerize
+The Dockerfile provided contains the information necessary to containerize this Flask application.
+_NOTE: This section is not necessary to complete the deployment_
+If we wanted to dockerize and run this container locally, we would go to our repository root and build:
+`docker build . --tag SOME_CONTAINER_NAME`
+If the Docker daemon is running and has sufficient resources, this should result in logs showing the pip installs and other setup steps that are outlined in the Dockerfile as they are performed and the image is built.
+To test and see if the container is running correctly, you could run (using the same container name as above):
+`docker run -d -p 8080:8080 SOME_CONTAINER_NAME`
+This will output the container ID if it is successful. To check that it is running, you can enter:
+`docker container list`
+This will output something like the below (I used the container name `workshopcontainerjan22` instead of `SOME_CONTAINER_NAME`):
 
+```
+(mlops-venv) Matthias@Matthiass-MBP ncf-mlops-workshop-jan22 % docker container list         CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+63a825cedd19   workshopcontainerjan22   "/bin/sh -c 'exec gu…"   5 seconds ago   Up 4 seconds   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   zen_pike
+```
+
+This just means that the application is listening for requests on the appropriate ports and we can make requests (here on http://0.0.0.0:8080 based on the numbers shown). As expected, a Python shell will be able to interact with the container:
+
+```
+>>> content_json = json.loads(requests.post('http://0.0.0.0:8080/predict',json={"response":"He is the worst!"}).content)
+>>> content_json['annoyance']
+0.12393056601285934
+```
+
+You can stop this running container by noting the NAME at the end of the row entry resulting from `docker container list`. Above, this container was automatically named `zen_pike` by the Docker daemon, so we can just run the following to stop the container:
+`docker kill zen_pike`
+
+## Step 5: Deploy
+We will be using Cloud Run to actually perform this deployment. This is a resource offered by Google Cloud that can build and run containerized applications. It happens to be a convenient way to serve simple Flask applications like this one.
+
+Requirements:
+You have an account with access to GCP Project
+You have Google Cloud SDK installed
+
+First, login:
+`gcloud auth login`
+Should open your Chrome browser where you can login to your GCP account, usually a gmail account. Once you have done this your shell will have authorization to access project resources.
+
+Then, to perform the deployment, run the following command:
+```
+
+gcloud run deploy --source . \
+--platform=managed \
+--concurrency=1 \
+--cpu=1 \
+--memory=1G \
+--allow-unauthenticated
+
+```
+
+This may prompt you to allow certain APIs, or warn you that you need certain permissions. I can provide access to privileges as students reach this point. If asked to allow access to the APIs, approve it by hitting Enter or pressing 'y'. When prompted for zone, you can enter 24 for us-east1 and hit Enter.
+
+If all works, the below should result:
+
+```
+
+Service name (ncf-mlops-workshop-jan22):  
+Please specify a region:
+ [1] asia-east1
+ [2] asia-east2
+ [3] asia-northeast1
+ [4] asia-northeast2
+ [5] asia-northeast3
+ [6] asia-south1
+ [7] asia-south2
+ [8] asia-southeast1
+ [9] asia-southeast2
+ [10] australia-southeast1
+ [11] australia-southeast2
+ [12] europe-central2
+ [13] europe-north1
+ [14] europe-west1
+ [15] europe-west2
+ [16] europe-west3
+ [17] europe-west4
+ [18] europe-west6
+ [19] northamerica-northeast1
+ [20] northamerica-northeast2
+ [21] southamerica-east1
+ [22] southamerica-west1
+ [23] us-central1
+ [24] us-east1
+ [25] us-east4
+ [26] us-west1
+ [27] us-west2
+ [28] us-west3
+ [29] us-west4
+ [30] cancel
+Please enter your numeric choice:  24
+
+To make this the default region, run `gcloud config set run/region us-east1`.
+
+This command is equivalent to running `gcloud builds submit --tag [IMAGE] .` and `gcloud run deploy ncf-mlops-workshop-jan22 --image [IMAGE]`
+
+Building using Dockerfile and deploying container to Cloud Run service [ncf-mlops-workshop-jan22] in project [ncf-mlops-workshop-jan-2022] region [us-east1]
+✓ Building and deploying... Done.                                                                                
+  ✓ Uploading sources...                                                                                         
+  ✓ Building Container... Logs are available at [https://console.cloud.google.com/cloud-build/builds/b55b1e33-ef0
+  a-4efb-9aec-9cc0bb41aa4f?project=418055566548].                                                                
+  ✓ Creating Revision...                                                                                         
+  ✓ Routing traffic...                                                                                           
+  ✓ Setting IAM Policy...                                                                                        
+Done.                                                                                                            
+Service [ncf-mlops-workshop-jan22] revision [ncf-mlops-workshop-jan22-00013-bos] has been deployed and is serving 100 percent of traffic.
+Service URL: https://ncf-mlops-workshop-jan22-4lk5kh4waa-ue.a.run.app
+
+```
+
+You should now be able to make requests at the URL shown above, with the `/predict` suffix path included as in testing.
