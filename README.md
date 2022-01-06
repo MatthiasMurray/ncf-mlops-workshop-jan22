@@ -146,8 +146,9 @@ This will output the container ID if it is successful. To check that it is runni
 This will output something like the below (I used the container name `workshopcontainerjan22` instead of `SOME_CONTAINER_NAME`):
 
 ```
-(mlops-venv) Matthias@Matthiass-MBP ncf-mlops-workshop-jan22 % docker container list         CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                       NAMES
-63a825cedd19   workshopcontainerjan22   "/bin/sh -c 'exec gu…"   5 seconds ago   Up 4 seconds   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   zen_pike
+(mlops-venv) Matthias@Matthiass-MBP ncf-mlops-workshop-jan22 % docker container list
+CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                       NAMES
+63a825cedd19   workshopcontainerjan22   "/bin/sh -c 'exec gu…"   8 minutes ago   Up 8 minutes   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   zen_pike
 ```
 
 This just means that the application is listening for requests on the appropriate ports and we can make requests (here on http://0.0.0.0:8080 based on the numbers shown). As expected, a Python shell will be able to interact with the container:
