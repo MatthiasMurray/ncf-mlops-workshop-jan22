@@ -1,10 +1,13 @@
 FROM python:3.9-slim
 
+# Allow statements and log messages to immediately appear in the Knative logs
+ENV PYTHONUNBUFFERED True
+
 RUN apt-get update \
 && apt-get install gcc -y \
 && apt-get clean
 
-ADD . /app/
+COPY . /app/
 
 WORKDIR /app
 
@@ -12,7 +15,8 @@ RUN pip3.9 install --no-cache-dir -r requirements.txt
 
 RUN pip3.9 install en_textcat_goemotions-0.0.1-py3-none-any.whl
 
-EXPOSE 5000
+EXPOSE 8080
+ENV PORT 8080
 
 # Run the web service on container startup. Here we use the gunicorn
 # webserver, with one worker process and 8 threads.
