@@ -4,13 +4,17 @@ Contains the code to run MLOps sample deployment
 ## Step 1: Create Environment
 
 To keep our work separate from other software on your computer, we will create a python venv containing spacy and the required dependencies for model training. Run the below in the terminal:
+
 `python3 -m venv mlops-venv`
 
 Activate/enter the environment so we can start installing the needed packages:
+
 `source mlops-venv/bin/activate`
 
 Finally, install libraries needed for training:
+
 `pip install spacy`
+
 `pip install wheel`
 
 If you didn't have any issues performing these steps, you should now see `(mlops-venv)` at the start of each terminal line and you are now ready to begin the workshop!
@@ -21,28 +25,37 @@ If you have any issues with this step, for example in creating the venv or perfo
 The spaCy projects repository contains some easy-start templates for common training situations that can be used out of the box. We will clone in the spacy projects textcat_goemotions training template, modify it to only run for a fraction of the given iterations, and save the model object (a Python `.whl`)
 
 Once spaCy is already available in the current working environment, you can simply run:
+
 `spacy project clone tutorials/textcat_goemotions`
 
-The `textcat_goemotions` template should be cloned as desired. _NOTE: it is extremely uncommon for Python projects/repositories/libraries to re-implement git as in the clone feature here, this is just included as a matter of convenience in this repository_
-*IMPORTANT*: Next, open `textcat_goemotions/configs/cnn.cfg` in the IDE file explorer and change line 76 from `max_steps = 20000` to `max_steps = 2500` so that we don't spend forever waiting for it to train. It will not be as accurate as it could be, but we want to get started with deployment as soon as possible since we can always retrain the model and deploy a better version later.
+The `textcat_goemotions` template should have be cloned as desired as a result of this command. _NOTE: it is extremely uncommon for Python projects/repositories/libraries to re-implement git as in the clone feature here, this is just included as a matter of convenience in this repository_
 
-Once you have changed this configuration setting, *SAVE THE `cnn.cfg` FILE* and then run the below steps in the shell:
+**IMPORTANT**: Next, open `textcat_goemotions/configs/cnn.cfg` in the IDE file explorer and change line 76 from `max_steps = 20000` to `max_steps = 2500` so that we don't spend forever waiting for it to train. It will not be as accurate as it could be, but we want to get started with deployment as soon as possible since we can always retrain the model and deploy a better version later.
+
+Once you have changed this configuration setting, **SAVE THE `cnn.cfg` FILE** and then run the below steps in the shell:
 
  - Change directories to put you inside of `textcat_goemotions` instead of the parent directory we cloned from GitHub:
+
  `cd textcat_goemotions`
 
  - Download the data used to train the model from a file location hosted by GitHub -- note that it is not normal for file downloads to be so cleanly accessible, but this is meant to be out of the box, and the format of the downloaded files can be viewed by accessing the assets URLs in the `project.yml`:
+
  `spacy project assets`
 
  - Run training workflow defined in `project.yml` including parsing the data, training as specified by the configuration file `configs/cnn.cfg`, and packaging the model as a `.whl`:
+
  `spacy project run all`
 
 If the above steps are performed correctly, the training should run for several minutes but not more than 10-15 minutes. The result should be a number of log outputs, the last of which will state:
+
+```
 ✔ Successfully created binary wheel
 packages/en_textcat_goemotions-0.0.1/dist/en_textcat_goemotions-0.0.1-py3-none-any.whl
+```
 
 ## Step 3: Install and Test Model
 If we scroll up a bit we will see logs describing the accuracy of the model on different classes on the holdout data. This was a very short training run and there are several classes so the model may not be very performant yet, but it looks like the 'gratitude' class has particularly promising statistics. Let's try a few inputs to see if they can be properly predicted. Since we have the `.whl` file, we can pip install that:
+
 `pip install packages/en_textcat_goemotions-0.0.1/dist/en_textcat_goemotions-0.0.1-py3-none-any.whl`
 
 This enables us to call the most recently installed version of the model very easily. We can open up a Python shell:
@@ -66,17 +79,16 @@ There are a lot of fields, but the test response "Oh thank you so much" got an a
 
 ## Step 4: Flask App
 
-We will use Flask as a simple framework for delivering HTTP requests taking the form of the tests from the previous step. The idea is, we will host a Flask app, that will have a URL associated with it, and when we send JSON similar to `{"text":"Some message"}` as a payload, we will get back a payload with the above JSON of predictions.
+We will use Flask as a simple framework for delivering HTTP requests taking the form of the tests from the previous step. The idea is, we will host a Flask app, that will have a URL associated with it, and when we send JSON similar to `{"response":"Some message"}` as a payload, we will get back a payload with the above JSON of predictions.
 We will be making partial use of the Python quickstart in this guide for the next few steps: https://cloud.google.com/run/docs/quickstarts
 
 In order to run the Flask app, install Flask and gunicorn:
+
 `pip install Flask==2.0.2`
+
 `pip install gunicorn==20.1.0`
 
-Then we can run the app locally. Navigate to the root of this repository (`ncf-mlops-workshop-jan22`):
-`cd ..`
-
-And then run the Flask app from the shell:
+Then we can run the app locally. Navigate to the root of this repository (`ncf-mlops-workshop-jan22`) and then run the Flask app from the shell:
 `python3 app.py`
 
 You will get some logs telling you what the location of the Flask server is on your local machine:
@@ -114,14 +126,23 @@ Great, so we have a Flask app. Terminate the process with Ctl-C to cancel.
 
 ## Step 5a: Dockerize
 The Dockerfile provided contains the information necessary to containerize this Flask application.
+
 _NOTE: This section is not necessary to complete the deployment_
+
 If we wanted to dockerize and run this container locally, we would go to our repository root and build:
+
 `docker build . --tag SOME_CONTAINER_NAME`
+
 If the Docker daemon is running and has sufficient resources, this should result in logs showing the pip installs and other setup steps that are outlined in the Dockerfile as they are performed and the image is built.
+
 To test and see if the container is running correctly, you could run (using the same container name as above):
+
 `docker run -d -p 8080:8080 SOME_CONTAINER_NAME`
+
 This will output the container ID if it is successful. To check that it is running, you can enter:
+
 `docker container list`
+
 This will output something like the below (I used the container name `workshopcontainerjan22` instead of `SOME_CONTAINER_NAME`):
 
 ```
@@ -138,29 +159,31 @@ This just means that the application is listening for requests on the appropriat
 ```
 
 You can stop this running container by noting the NAME at the end of the row entry resulting from `docker container list`. Above, this container was automatically named `zen_pike` by the Docker daemon, so we can just run the following to stop the container:
+
 `docker kill zen_pike`
 
 ## Step 5: Deploy
 We will be using Cloud Run to actually perform this deployment. This is a resource offered by Google Cloud that can build and run containerized applications. It happens to be a convenient way to serve simple Flask applications like this one.
 
 Requirements:
-You have an account with access to GCP Project
-You have Google Cloud SDK installed
+ - You have an account with access to GCP Project
+ - You have Google Cloud SDK installed
 
 First, login:
+
 `gcloud auth login`
+
 Should open your Chrome browser where you can login to your GCP account, usually a gmail account. Once you have done this your shell will have authorization to access project resources.
 
 Then, to perform the deployment, run the following command:
-```
 
+```
 gcloud run deploy --source . \
 --platform=managed \
 --concurrency=1 \
 --cpu=1 \
 --memory=1G \
 --allow-unauthenticated
-
 ```
 
 This may prompt you to allow certain APIs, or warn you that you need certain permissions. I can provide access to privileges as students reach this point. If asked to allow access to the APIs, approve it by hitting Enter or pressing 'y'. When prompted for zone, you can enter 24 for us-east1 and hit Enter.
@@ -168,7 +191,6 @@ This may prompt you to allow certain APIs, or warn you that you need certain per
 If all works, the below should result:
 
 ```
-
 Service name (ncf-mlops-workshop-jan22):  
 Please specify a region:
  [1] asia-east1
@@ -218,7 +240,6 @@ Building using Dockerfile and deploying container to Cloud Run service [ncf-mlop
 Done.                                                                                                            
 Service [ncf-mlops-workshop-jan22] revision [ncf-mlops-workshop-jan22-00013-bos] has been deployed and is serving 100 percent of traffic.
 Service URL: https://ncf-mlops-workshop-jan22-4lk5kh4waa-ue.a.run.app
-
 ```
 
 You should now be able to make requests at the URL shown above, with the `/predict` suffix path included as in testing.
