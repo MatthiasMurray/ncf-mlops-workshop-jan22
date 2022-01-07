@@ -27,7 +27,7 @@ steps:
   - '_TEST_KEYS=${_TEST_KEYS}'
   args:
   - -c
-  - 'pip3.9 install --no-cache-dir -r requirements.txt && pip3.9 install ${_MODEL_NAME}-${_MODEL_VERSION}/dist/${_MODEL_NAME}-${_MODEL_VERSION}-py3-none-any.whl && python3 test_app.py'
+  - 'pip3.9 install --no-cache-dir -r requirements.txt && pip3.9 install ${_MODEL_NAME}-${_MODEL_VERSION}-py3-none-any.whl && python3 test_app.py'
 
 
 # This step builds the container image.
