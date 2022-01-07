@@ -43,7 +43,7 @@ steps:
   - '--build-arg=_APP_NAME=${_APP_NAME}'
   - '--build-arg=_TEST_KEYS=${_TEST_KEYS}'
   - '-t'
-  - 'gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_APP_NAME}-${_STUDENT_NAME}/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
   - '.'
 
 # This step pushes the image to Container Registry
@@ -56,7 +56,7 @@ steps:
   - ['source','./set_variables.sh']
   args:
   - 'push'
-  - 'gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/${_APP_NAME}-${_STUDENT_NAME}/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
 # [END cloudbuild]
 
 - name: 'gcr.io/cloud-builders/gcloud'
