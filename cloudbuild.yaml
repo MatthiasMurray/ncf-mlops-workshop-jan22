@@ -66,7 +66,7 @@ steps:
   - ['source','./set_variables.sh']
   args:
   - 'run deploy ${_APP_NAME}-${_STUDENT_NAME} \
-  --image gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA \
+  --image gcr.io/$PROJECT_ID/${_APP_NAME}-${_STUDENT_NAME}/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA \
   --region us-east1 \
   --allow-unauthenticated'
 timeout: 4000s
