@@ -1,0 +1,73 @@
+# Copyright 2018 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# [START cloudbuild]
+steps:
+- name: 'python:3.9-slim'
+  id: Test
+  entrypoint: /bin/sh
+  args:
+  - ['chmod','+x','set_variables.sh']
+  - ['source','./set_variables.sh']
+  env:
+  - '_MODEL_NAME=${_MODEL_NAME}'
+  - '_MODEL_VERSION=${_MODEL_VERSION}'
+  - '_APP_NAME=${_APP_NAME}'
+  - '_TEST_KEYS=${_TEST_KEYS}'
+  args:
+  - -c
+  - 'pip3.9 install --no-cache-dir -r requirements.txt && pip3.9 install ${_MODEL_NAME}-${_MODEL_VERSION}/dist/${_MODEL_NAME}-${_MODEL_VERSION}-py3-none-any.whl && python3 test_app.py'
+
+
+# This step builds the container image.
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build
+  args:
+  - ['chmod','+x','set_variables.sh']
+  - ['source','./set_variables.sh']
+  args:
+  - 'build'
+  - '--build-arg=_MODEL_NAME=${_MODEL_NAME}'
+  - '--build-arg=_MODEL_VERSION=${_MODEL_VERSION}'
+  - '--build-arg=_APP_NAME=${_APP_NAME}'
+  - '--build-arg=_TEST_KEYS=${_TEST_KEYS}'
+  - '-t'
+  - 'gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
+  - '.'
+
+# This step pushes the image to Container Registry
+# The PROJECT_ID and SHORT_SHA variables are automatically
+# replaced by Cloud Build.
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push
+  args:
+  - ['chmod','+x','set_variables.sh']
+  - ['source','./set_variables.sh']
+  args:
+  - 'push'
+  - 'gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA'
+# [END cloudbuild]
+
+- name: 'gcr.io/cloud-builders/gcloud'
+  id: Deploy
+  args:
+  - ['chmod','+x','set_variables.sh']
+  - ['source','./set_variables.sh']
+  args:
+  - 'gcloud run deploy ${_APP_NAME}-${_STUDENT_NAME} \
+  --image gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA \
+  --region us-east1 \
+  --allow-unauthenticated'
+timeout: 4000s
+# [END cloudbuild-trigger-cd]

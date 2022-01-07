@@ -1,0 +1,6 @@
+- --substitutions:
+    _APP_NAME: appname
+    _STUDENT_NAME: studentname
+    _MODEL_NAME: modelname
+    _MODEL_VERSION: modelversion
+    _TEST_KEYS: testkeys

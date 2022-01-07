@@ -3,18 +3,24 @@ FROM python:3.9-slim
 # Allow statements and log messages to immediately appear in the Knative logs
 ENV PYTHONUNBUFFERED True
 
+# Install C compiler and some other low-level dependencies
 RUN apt-get update \
 && apt-get install gcc -y \
 && apt-get clean
 
+# Move the contents of the codebase into the Docker container
 COPY . /app/
 
+# Set the working directory
 WORKDIR /app
 
+# Install the Python dependencies
 RUN pip3.9 install --no-cache-dir -r requirements.txt
 
-RUN pip3.9 install en_textcat_goemotions-0.0.1-py3-none-any.whl
+# Install the spaCy model (which we have saved as a Python .whl so we can pip install)
+RUN pip3.9 install ${_MODEL_NAME}-${_MODEL_VERSION}-py3-none-any.whl
 
+# Open up port 8080 on this container so the traffic occuring on that port can be used
 EXPOSE 8080
 ENV PORT 8080
 
