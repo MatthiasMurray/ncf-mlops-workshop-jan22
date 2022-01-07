@@ -61,6 +61,6 @@ steps:
 
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Deploy
-  args: ['run','deploy','${_APP_NAME}-${_STUDENT_NAME}','--image','gcr.io/$PROJECT_ID/${_APP_NAME}-${_STUDENT_NAME}/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA','--region','us-east1','--allow-unauthenticated']
-timeout: 2000s
+  args: ['run','deploy','${_APP_NAME}-${_STUDENT_NAME}','--image','gcr.io/$PROJECT_ID/${_APP_NAME}-${_STUDENT_NAME}/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA','--platform=managed','--concurrency=1','--cpu=1','memory=1G','--allow-unauthenticated','--region','us-east1']
+timeout: 4000s
 # [END cloudbuild-trigger-cd]
