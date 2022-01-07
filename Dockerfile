@@ -8,6 +8,15 @@ RUN apt-get update \
 && apt-get install gcc -y \
 && apt-get clean
 
+# Assign build args as environment variables
+ARG _MODEL_NAME=${_MODEL_NAME}
+ARG _MODEL_VERSION=${_MODEL_VERSION}
+ARG _APP_NAME=${_APP_NAME}
+
+ENV _MODEL_NAME=${_MODEL_NAME}
+ENV _MODEL_VERSION=${_MODEL_VERSION}
+ENV _APP_NAME=${_APP_NAME}
+
 # Move the contents of the codebase into the Docker container
 COPY . /app/
 
