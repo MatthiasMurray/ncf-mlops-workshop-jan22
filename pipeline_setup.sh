@@ -11,7 +11,7 @@ gcloud source repos create ncf-mlops-workshop-jan-2022-$_STUDENT_NAME
 
 # set this new cloud repo as remote
 PROJECT_ID=$(gcloud config get-value project)
-git remote rm origin
+# git remote rm origin ## UNCOMMENT IF YOU WANT TO REMOVE ORIGIN AS REMOTE DURING SETUP
 git remote add google \
     "https://source.developers.google.com/p/${PROJECT_ID}/r/ncf-mlops-workshop-jan-2022-${_STUDENT_NAME}"
 

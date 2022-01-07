@@ -244,3 +244,55 @@ Service URL: https://ncf-mlops-workshop-jan22-4lk5kh4waa-ue.a.run.app
 ```
 
 You should now be able to make requests at the URL shown above, with the `/predict` suffix path included as in testing.
+
+## Step 6: (BONUS!) CI/CD Pipeline with Cloud Build
+In order to reduce the developer workflow to simply pushing to the `main` branch when code changes are finalized, we need to set up a trigger that can perform the deployment we did above upon a push to that `main` branch. This is a DevOps approach, which is why we're calling this an MLOps workshop. A lot of ideas about how to set this up come from this page:
+
+https://cloud.google.com/kubernetes-engine/docs/tutorials/gitops-cloud-build
+
+The above page more fully outlines the process for deployment of containerized Flask apps to a managed Google Kubernetes cluster as opposed to the abstraction of Cloud Run. However, we can borrow heavily from its approach to accomplish this slightly simpler and very similar configuration.
+
+As in the article, we need to configure some permissions before proceeding. Permissions can be tricky since what you see is not necessarily what I see, so just reach out if you are confused or hitting a wall during this process.
+
+A few commands that should help us get configured or identify any potential problems up front:
+
+```
+gcloud init && git config --global credential.https://source.developers.google.com.helper gcloud.sh
+```
+
+Should walk you through an interactive configuration. You should be able to select this project, your email address, etc. **Do not choose a fixed region.**
+
+```
+gcloud services enable container.googleapis.com \
+    cloudbuild.googleapis.com \
+    sourcerepo.googleapis.com \
+    artifactregistry.googleapis.com
+```
+
+Should turn on a lot of the required permissions/APIs if required.
+
+
+You must properly defined the variables in the `set_variables.sh` file and run both of these commands:
+
+```
+./set_variables.sh
+source ./set_variables.sh
+```
+
+Now, you should be able to create the container repository:
+
+```
+gcloud artifacts repositories create ${_APP_NAME}-${_STUDENT_NAME} \
+  --repository-format=docker \
+  --location=us-east1
+```
+
+Now you should be able to run the pipeline setup:
+
+```
+./pipeline_setup.sh
+```
+
+This should indicate that a Build Trigger and Source Repository have been successfully created, and possibly prompt for API permissions if they have not been properly assigned yet.
+
+As a result of setting up this pipeline, any pushes of the form `git push google main` in this repository will now trigger the build trigger that was created, which will run the `cloudbuild.yaml` and its individual Test, Build, Push, Deploy steps. If all works properly and your permissions are correctly set, you should be able to view the build process in Cloud Build in the Cloud Console (or via `gcloud builds list`). After about 10 minutes the app should be up if everything is working correctly. Now any time you need to make changes to this app, improve the model or add new functionality, you simply need to `git push google main` and the container will attempt to rebuild and redeploy. Hopefully, you will be able to use this repository as a template for your own GCP projects or any serverless MLOps deployments.
