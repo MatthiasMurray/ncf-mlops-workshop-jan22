@@ -65,7 +65,7 @@ steps:
   - ['chmod','+x','set_variables.sh']
   - ['source','./set_variables.sh']
   args:
-  - 'gcloud run deploy ${_APP_NAME}-${_STUDENT_NAME} \
+  - 'run deploy ${_APP_NAME}-${_STUDENT_NAME} \
   --image gcr.io/${_APP_NAME}-${_STUDENT_NAME}-cloudbuild:$SHORT_SHA \
   --region us-east1 \
   --allow-unauthenticated'
