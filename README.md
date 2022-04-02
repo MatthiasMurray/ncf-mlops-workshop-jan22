@@ -13,6 +13,8 @@ Activate/enter the environment so we can start installing the needed packages:
 
 Finally, install libraries needed for training:
 
+`pip install --upgrade pip`
+
 `pip install spacy`
 
 `pip install wheel`
@@ -131,7 +133,7 @@ _NOTE: This section is not necessary to complete the deployment_
 
 If we wanted to dockerize and run this container locally, we would go to our repository root and build:
 
-`docker build . --tag SOME_CONTAINER_NAME`
+`docker build --build-arg _MODEL_NAME=$_MODEL_NAME _MODEL_VERSION=$_MODEL_VERSION . --tag SOME_CONTAINER_NAME`
 
 If the Docker daemon is running and has sufficient resources, this should result in logs showing the pip installs and other setup steps that are outlined in the Dockerfile as they are performed and the image is built.
 
